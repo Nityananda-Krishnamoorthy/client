@@ -3,20 +3,22 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 
 const RightSidebar = () => {
   const [friendRequests, setFriendRequests] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [showRequests, setShowRequests] = useState(true);
   const [showSuggestions, setShowSuggestions] = useState(true);
-  const token = useSelector(state => state?.user?.currentUser?.token)
+  const token = useSelector(state => state?.user?.currentUser?.token);
+  const currentUserId = useSelector(state => state?.user?.currentUser?._id);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // ===================== FETCH FRIEND REQUESTS =====================
+  // Fetch friend requests
   const fetchFriendRequests = async () => {
     try {
-      const res = await axios.get(`${API_URL}/users/follow-requests`, {
+      const res = await axios.get(`${API_URL}/users/me/pending-requests`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFriendRequests(res.data);
@@ -25,7 +27,7 @@ const RightSidebar = () => {
     }
   };
 
-  // ===================== FETCH SUGGESTIONS =====================
+  // Fetch suggestions
   const fetchSuggestions = async () => {
     try {
       const res = await axios.get(`${API_URL}/users/suggested`, {
@@ -37,7 +39,7 @@ const RightSidebar = () => {
     }
   };
 
-  // ===================== ACCEPT / REJECT REQUEST =====================
+  // Accept/reject friend request
   const handleRequestResponse = async (username, action) => {
     try {
       await axios.post(
@@ -45,40 +47,42 @@ const RightSidebar = () => {
         { action },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Refresh friend requests after action
-      fetchFriendRequests();
+      // Remove the request from UI immediately
+      setFriendRequests(prev => prev.filter(user => user.userName !== username));
     } catch (err) {
       console.error(`Failed to ${action} follow request`, err);
     }
   };
 
-  // ===================== FOLLOW USER =====================
-  const handleFollow = async (userId) => {
+  // Follow user
+  const handleFollow = async (username) => {
     try {
       await axios.post(
-        `${API_URL}/users/${userId}/follow`,
+        `${API_URL}/users/${username}/follow`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Optionally remove from suggestions
-      setSuggestions((prev) => prev.filter((u) => u._id !== userId));
+      // Update suggestions immediately
+      setSuggestions(prev => prev.filter(user => user.userName !== username));
     } catch (err) {
       console.error("Failed to follow user", err);
     }
   };
 
-  // ===================== INIT FETCH =====================
+  // Initial fetch
   useEffect(() => {
-    fetchFriendRequests();
-    fetchSuggestions();
-  }, []);
+    if (token) {
+      fetchFriendRequests();
+      fetchSuggestions();
+    }
+  }, [token]);
 
   return (
-    <div className="w-full max-w-xs px-4 py-6 bg-white rounded-lg shadow-md space-y-6">
-      {/* Friend Requests */}
-      <div className="space-y-2">
-        <div
-          className="flex items-center justify-between cursor-pointer"
+    <div className="w-full max-w-xs mt-4 px-4 py-6 bg-white  dark:bg-[#282c35] rounded-lg shadow-md space-y-6">
+      {/* Friend Requests Section */}
+      <div className="space-y-3">
+        <div 
+          className="flex items-center justify-between cursor-pointer py-2"
           onClick={() => setShowRequests(!showRequests)}
         >
           <h3 className="text-lg font-semibold">Friend Requests</h3>
@@ -86,35 +90,46 @@ const RightSidebar = () => {
         </div>
 
         {showRequests && (
-          <div className="space-y-3 pt-1">
+          <div className="space-y-3">
             {friendRequests.length === 0 ? (
-              <p className="text-sm text-gray-500">No pending requests</p>
+              <p className="text-sm text-gray-500 py-2">No pending requests</p>
             ) : (
               friendRequests.map((user) => (
-                <div
+                <div 
                   key={user?._id}
-                  className="flex items-center justify-between bg-gray-50 rounded px-3 py-2"
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
                 >
-                  <div className="flex items-center space-x-2">
-                    <img
-                      src={user?.profilePhoto}
-                      alt={user?.userName}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <span className="text-sm font-medium">@{user?.userName}</span>
+                  <div className="flex items-center space-x-3">
+                   <Link
+                      to={`/users/${user?.userName}`}
+                      className="flex items-center space-x-3 hover:underline"
+                    >
+                      <img
+                        src={user?.profilePhoto || "/default-avatar.png"}
+                        alt={user?.userName}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">@{user?.userName}</p>
+                        <p className="text-xs text-gray-500">{user?.fullName}</p>
+                      </div>
+                    </Link>
+
                   </div>
-                  <div className="space-x-1">
+                  <div className="flex space-x-1">
                     <button
                       onClick={() => handleRequestResponse(user?.userName, "accept")}
-                      className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                      className="p-1.5 rounded-full bg-green-100 hover:bg-green-200 transition"
+                      title="Accept"
                     >
-                      ✓
+                      <ChevronUp className="text-green-600" size={16} />
                     </button>
                     <button
                       onClick={() => handleRequestResponse(user?.userName, "reject")}
-                      className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                      className="p-1.5 rounded-full bg-red-100 hover:bg-red-200 transition"
+                      title="Reject"
                     >
-                      ✕
+                      <ChevronDown className="text-red-600" size={16} />
                     </button>
                   </div>
                 </div>
@@ -124,10 +139,10 @@ const RightSidebar = () => {
         )}
       </div>
 
-      {/* Suggestions */}
-      <div className="space-y-2 pt-4 border-t border-gray-200">
-        <div
-          className="flex items-center justify-between cursor-pointer"
+      {/* Suggestions Section */}
+      <div className="space-y-3 pt-4 border-t border-gray-200">
+        <div 
+          className="flex items-center justify-between cursor-pointer py-2"
           onClick={() => setShowSuggestions(!showSuggestions)}
         >
           <h3 className="text-lg font-semibold">Suggestions</h3>
@@ -135,26 +150,35 @@ const RightSidebar = () => {
         </div>
 
         {showSuggestions && (
-          <div className="space-y-3 pt-1">
+          <div className="space-y-3">
             {suggestions.length === 0 ? (
-              <p className="text-sm text-gray-500">No suggestions</p>
+              <p className="text-sm text-gray-500 py-2">No suggestions</p>
             ) : (
               suggestions.map((user) => (
-                <div
-                  key={user?._id}
-                  className="flex items-center justify-between bg-gray-50 rounded px-3 py-2"
+                <div 
+                  key={user._id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
                 >
-                  <div className="flex items-center space-x-2">
-                    <img
-                      src={user?.profilePhoto}
-                      alt={user?.userName}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <span className="text-sm font-medium">@{user?.userName}</span>
+                  <div className="flex items-center space-x-3">
+                    <Link
+                      to={`/users/${user?.userName}`}
+                      className="flex items-center space-x-3 hover:underline"
+                    >
+                      <img
+                        src={user.profilePhoto || "/default-avatar.png"}
+                        alt={user.userName}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">@{user.userName}</p>
+                        <p className="text-xs text-gray-500">Suggested for you</p>
+                      </div>
+                    </Link>
+
                   </div>
                   <button
-                    onClick={() => handleFollow(user?._id)}
-                    className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                    onClick={() => handleFollow(user.userName)}
+                    className="px-3 py-1.5 text-xs bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
                   >
                     Follow
                   </button>

@@ -1,19 +1,21 @@
+// src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.jsx';
-import './index.css';
-// import { SocketProvider } from '../src/context/SocketContext.js';
-// import io from 'socket.io-client';
+import App from './App';
+import socket from './socket';
+import './index.css'
 
-// const socket = io(import.meta.env.VITE_API_URL, {
-//   withCredentials: true,
-//   autoConnect: true,
-// });
+// Connect socket when app starts
+socket.connect();
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
   <React.StrictMode>
-    {/* <SocketProvider socket={socket}> */}
-      <App />
-    {/* </SocketProvider> */}
+    <App />
   </React.StrictMode>
 );
+
+// Disconnect socket when app unloads
+window.addEventListener('beforeunload', () => {
+  socket.disconnect();
+});

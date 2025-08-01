@@ -9,6 +9,8 @@ import EditProfileModal from './EditProfileModal';
 import UserPosts from '../components/UserPosts';
 import { userActions } from '../store/user-slice';
 import { Link } from 'react-router-dom';
+import Divider from '@mui/material/Divider';
+
 
 const UserProfile = () => {
   const currentUser = useSelector((state) => state.user.currentUser);
@@ -34,6 +36,7 @@ const UserProfile = () => {
       });
 
       setUser(res.data);
+      console.log(res.data);
       setAvatar(res.data?.profilePhoto || '');
 
       const hasFollowed = Array.isArray(res.data?.followers)
@@ -131,9 +134,9 @@ const UserProfile = () => {
   }
 
   return (
-    <section className="w-full max-w-2xl mx-auto px-4 sm:px-6 py-[-20px]">
+    <section className="w-full py-12 max-w-2xl mx-auto px-4 sm:px-6 ">
       {!isCurrentUser && (
-        <div className="relative absolute right-0 mt-2 w-32">
+        <div className="relative right-0 mt-2 w-32">
           <button onClick={() => setShowBlockMenu(!showBlockMenu)}>
             <FaEllipsisH />
           </button>
@@ -205,10 +208,16 @@ const UserProfile = () => {
           <small className="text-gray-500">Followers</small>
         </li>
         <li>
-          <h4 className="text-lg font-semibold">0</h4>
-          <small className="text-gray-500">Likes</small>
+          <h4 className="text-lg font-semibold">{user?.posts?.length || 0}</h4>
+          <small className="text-gray-500">Posts</small>
         </li>
       </ul>
+      {/* Bio */}
+      <div className="mt-6 text-center px-4">
+        <p className="text-gray-600  bold whitespace-pre-wrap">
+          {user?.bio || "No bio available."}
+        </p>
+      </div>
 
       {/* Action Buttons */}
       <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -236,12 +245,7 @@ const UserProfile = () => {
 
         )}
       </div>
-      {/* Bio */}
-      <div className="mt-6 text-center px-4">
-        <p className="text-gray-600  bold whitespace-pre-wrap">
-          {user?.bio || "No bio available."}
-        </p>
-      </div>
+      
 
       {/* Edit Profile Modal */}
       {editOpen && (
@@ -252,6 +256,7 @@ const UserProfile = () => {
     onProfileUpdated={getUser}
   />
 )}
+{/* <Divider primary="Full width variant below" className='dark:bg-white bg-black'/> */}
       {/* Posts Section */}
       <UserPosts />
     </section>

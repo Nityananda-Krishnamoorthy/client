@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
-import { IoMdImages } from 'react-icons/io';
+// import { IoMdImages } from 'react-icons/io';
 
 const EditPost = () => {
   const { id } = useParams();
@@ -15,56 +15,46 @@ const EditPost = () => {
   const [media, setMedia] = useState([]);
   const [previewMedia, setPreviewMedia] = useState([]);
 
-  // Fetch existing post data
-useEffect(() => {
-  const fetchPost = async () => {
-    try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/posts/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  useEffect(() => {
+    const fetchPost = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/posts/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      const post = res.data;
-      setBody(post.body);
-      setTags(post.tags?.join(', ') || '');
-      setLocation(post.location || '');
+        const post = res.data;
+        setBody(post.body);
+        setTags(post.tags?.join(', ') || '');
+        setLocation(post.location || '');
 
-      const formattedMedia = (post.media || []).map((item) => {
-        // if item is a string, treat it as a URL only
-        const url = typeof item === 'string' ? item : item?.url;
-        const type = typeof item === 'string'
-          ? url?.split('.').pop()
-          : item?.type || url?.split('.').pop();
+        const formattedMedia = (post.media || []).map((item) => {
+          const url = typeof item === 'string' ? item : item?.url;
+          const type = typeof item === 'string' ? url?.split('.').pop() : item?.type || url?.split('.').pop();
+          if (!url || typeof url !== 'string') return null;
+          return { preview: url, type };
+        }).filter(Boolean);
 
-        if (!url || typeof url !== 'string') return null;
-
-        return { preview: url, type };
-      }).filter(Boolean); // remove nulls
-
-      setPreviewMedia(formattedMedia);
-    } catch (err) {
-      console.error('Failed to fetch post:', err);
-    }
-  };
-  fetchPost();
-}, [id, token]);
-
-
-
+        setPreviewMedia(formattedMedia);
+      } catch (err) {
+        console.error('Failed to fetch post:', err);
+      }
+    };
+    fetchPost();
+  }, [id, token]);
 
   const handleMediaChange = (e) => {
     const files = Array.from(e.target.files);
     const newPreviews = files.map((file) => ({
-    file,
-    preview: URL.createObjectURL(file),
-    type: file.type,
-  }));
-     setMedia(files);
-  setPreviewMedia((prev) => [...prev, ...newPreviews]);
+      file,
+      preview: URL.createObjectURL(file),
+      type: file.type,
+    }));
+    setMedia(files);
+    setPreviewMedia((prev) => [...prev, ...newPreviews]);
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-
     const formData = new FormData();
     formData.set('body', body);
     formData.set('tags', tags);
@@ -87,105 +77,82 @@ useEffect(() => {
   };
 
   return (
-<>
-    <button className="cancel-button " onClick={() => navigate(-1)}>
-            x cancel
-        </button>
-    <div className="editPostPage">
-        
-      <h2>Edit Post</h2>
-      
+    <div className="w-full max-w-2xl mx-auto p-4 py-12 md:p-6 lg:p-8">
+      <button className="text-red-500 text-sm mb-4" onClick={() => navigate(-1)}>
+        × Cancel
+      </button>
 
-      <form onSubmit={handleUpdate}>
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} />
+      <h2 className="text-xl font-semibold mb-4">Edit Post</h2>
+
+      <form onSubmit={handleUpdate} className="space-y-4">
+        <textarea
+          className="w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={4}
+          placeholder="What's on your mind?"
+        />
+
         <input
           type="text"
+          className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Tags (comma separated)"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
         />
+
         <input
           type="text"
+          className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Location"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
         />
 
         {previewMedia.length > 0 && (
-          <div className="editPost__preview">
-            {previewMedia.length > 0 && (
-                <div className="editPost__preview">
-                    {previewMedia.map((item, index) => {
-                        const src = item.preview;
-                        const type = item.type || '';
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {previewMedia.map((item, index) => {
+              const src = item.preview;
+              const type = item.type || '';
+              const isImage = type.startsWith('image') || /\.(jpeg|jpg|png|gif)$/i.test(src);
+              const isVideo = type.startsWith('video') || /\.(mp4|webm)$/i.test(src);
+              const isAudio = type.startsWith('audio') || /\.(mp3)$/i.test(src);
 
-                        // Helper functions for fallback in case `type` is missing
-                        const isImage = type.startsWith('image') || /\.(jpeg|jpg|png|gif)$/i.test(src);
-                        const isVideo = type.startsWith('video') || /\.(mp4|webm)$/i.test(src);
-                        const isAudio = type.startsWith('audio') || /\.(mp3)$/i.test(src);
-
-                        if (isImage) {
-                        return (
-                            <img
-                            key={index}
-                            src={src}
-                            alt={`media-${index}`}
-                            style={{
-                                width: '100px',
-                                height: '100px',
-                                objectFit: 'cover',
-                                borderRadius: '8px',
-                            }}
-                            />
-                        );
-                        }
-
-                        if (isVideo) {
-                        return (
-                            <video
-                            key={index}
-                            src={src}
-                            controls
-                            style={{ width: '150px', borderRadius: '8px' }}
-                            />
-                        );
-                        }
-
-                        if (isAudio) {
-                        return (
-                            <audio key={index} controls style={{ marginTop: '8px' }}>
-                            <source src={src} />
-                            </audio>
-                        );
-                        }
-
-                        return null;
-                    })}
-                    </div>
-                )}
+              if (isImage) {
+                return <img key={index} src={src} alt={`media-${index}`} className="w-full h-24 object-cover rounded-md" />;
+              }
+              if (isVideo) {
+                return <video key={index} src={src} controls className="w-full rounded-md" />;
+              }
+              if (isAudio) {
+                return <audio key={index} controls className="w-full"><source src={src} /></audio>;
+              }
+              return null;
+            })}
           </div>
         )}
 
-         <div className="editPost__bottom">
-         <label htmlFor="media">
+        <div className="flex items-center gap-4">
+          {/* <label htmlFor="media" className="cursor-pointer text-blue-600 hover:text-blue-800">
             <IoMdImages size={28} />
-        </label>
-            <input
-                type="file"
-                id="media"
-                accept="image/*,video/*,audio/*"
-                multiple
-                hidden
-                onChange={handleMediaChange}
-                />
-            <button type="submit" >
-                Update Post
-            </button>
-            </div>
+          </label>
+          <input
+            type="file"
+            id="media"
+            accept="image/*,video/*,audio/*"
+            multiple
+            hidden
+            onChange={handleMediaChange}
+          />*/}
+          <button
+            type="submit"
+            className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          > 
+            Update Post
+          </button>
+        </div>
       </form>
     </div>
-
-    </>
   );
 };
 

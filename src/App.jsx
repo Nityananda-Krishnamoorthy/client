@@ -26,23 +26,26 @@ import UserPosts from './components/UserPosts'
 import Messages from './pages/Messages'  // Updated Messages component
 import Conversation from './components/chat/Conversation'  // New chat components
 import ConversationList from './components/chat/ConversationList'
+import Stories from './components/Stories';
+import StoryViewer from './components/StoryViewer';
+import CreateStory from './components/CreateStory';
 
 
 // Protected route wrapper
 const ProtectedRoute = () => {
-  const currentUser = useSelector(state => state.user.currentUser);
+  const currentUser = useSelector(state => state?.user?.currentUser);
   const location = useLocation();
-  
+
   if (!currentUser) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  
+
   return <Outlet />;
 };
 
 // Public route wrapper (for already authenticated users)
 const PublicRoute = () => {
-  const currentUser = useSelector(state => state.user.currentUser);
+  const currentUser = useSelector(state => state?.user?.currentUser);
   
   if (currentUser) {
     return <Navigate to="/" replace />;
@@ -68,10 +71,9 @@ const router = createBrowserRouter([
             element: <Messages />,
             children: [
               { index: true, element: <ConversationList /> },
-              { path: ':conversationId', element: <Conversation /> }
+              { path: ':id', element: <Conversation /> }
             ]
           },
-          
           { path: 'bookmarks', element: <BookmarksPage /> },
           { path: 'users/:id', element: <Profile /> },
           { path: 'post/:id', element: <SinglePost /> },
@@ -82,7 +84,10 @@ const router = createBrowserRouter([
           { path: 'settings', element : <SettingsPage/> },
           { path: 'explore', element : <ExplorePage/> },
           { path: 'blocked-users', element : <BlockedUsersPage/> },
-          { path: "/users/:id/posts", element: <UserPosts /> }
+          { path: "users/:id/posts", element: <UserPosts /> },
+
+          { path:"/" ,element:<CreateStory />},
+          { path:"/:storyId" ,element:<StoryViewer />},
         ]
       },
     ]
@@ -90,14 +95,14 @@ const router = createBrowserRouter([
   { 
     element: <PublicRoute />,
     children: [
-      { path: "/login", element: <Login /> },
-      { path: "/register", element: <Register /> },
-      { path: "/verify-email", element: <VerifyEmail /> },
-      { path: "/forgot-password", element: <ForgotPassword /> },
-      { path: "/reset-password", element: <ResetPassword /> }
+      { path: "login", element: <Login /> },
+      { path: "register", element: <Register /> },
+      { path: "verify-email", element: <VerifyEmail /> },
+      { path: "forgot-password", element: <ForgotPassword /> },
+      { path: "reset-password", element: <ResetPassword /> }
     ]
   },
-  { path: "/logout", element: <Logout /> }
+  { path: "logout", element: <Logout /> }
 ])
 
 const App = () => {

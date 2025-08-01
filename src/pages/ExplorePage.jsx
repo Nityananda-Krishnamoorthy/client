@@ -93,7 +93,7 @@ const ExplorePage = () => {
 
     <div className={`explore-page ${theme}`}>
       {/* Mobile Search Bar */}
-      <div className="mobile-search-container">
+      <div className="py-14 block lg:hidden ">
         <div className={`search-bar ${theme}`}>
           <input
             type="search"
@@ -150,9 +150,9 @@ const ExplorePage = () => {
         document.getElementById('portal-root')
       )}
 
-      <div className="explore-content">
+      <div className="explore-content lg:py-10">
         {/* Trending Topics Section */}
-        <div className="trending-section">
+        <div className="trending-section ">
           <h2>Trending Topics</h2>
           <div className="topics-container">
             {trendingTopics.length > 0 ? (
@@ -173,7 +173,7 @@ const ExplorePage = () => {
         </div>
         
       </div>
-       <Feeds/>
+       <Feeds className=" mt-12"/>
     </div>
    
     

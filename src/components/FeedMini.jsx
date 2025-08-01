@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaRegCommentDots, FaEllipsisH } from 'react-icons/fa';
 import { IoMdShare } from 'react-icons/io';
-
 import Bookmarking from './Bookmarking';
 import ProfileImage from './ProfileImage';
 import LikeDislikePost from './LikeDislikePost';
@@ -14,24 +13,30 @@ import TrimText from '../helpers/TrimText';
 const Feed = ({ post, onDeletePost, setPost }) => {
   const [creator, setCreator] = useState({});
   const [showMenu, setShowMenu] = useState(false);
+
+  const token = useSelector((state) => state?.user?.currentUser?.token);
+  const userId = useSelector((state) => state?.user?.currentUser?.id);
   const navigate = useNavigate();
 
-  const token = useSelector((state) => state.user.currentUser?.token);
-  const userId = useSelector((state) => state.user.currentUser?.id);
-  const currentUserId = useSelector((state) => state.user.currentUser?._id);
   const creatorId = post?.creator?._id || post?.creator;
+
+  const handlePostUpdate = (updatedPost) => {
+    setPost((prev) =>
+      prev.map((p) => (p._id === updatedPost._id ? updatedPost : p))
+    );
+  };
 
   const getPostCreator = async () => {
     if (!creatorId || post?.creator?.userName) return;
     try {
-      const { data } = await axios.get(
+      const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/users/${creatorId}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setCreator(data);
+      setCreator(response?.data);
     } catch (err) {
       console.error('Error fetching creator:', err);
     }
@@ -41,26 +46,19 @@ const Feed = ({ post, onDeletePost, setPost }) => {
     getPostCreator();
   }, [creatorId, token]);
 
-  const creatorData = post?.creator?.fullName ? post.creator : creator;
-
-  const handlePostUpdate = (updatedPost) => {
-    setPost((prevPosts) =>
-      Array.isArray(prevPosts)
-        ? prevPosts.map((p) => (p._id === updatedPost._id ? updatedPost : p))
-        : updatedPost
-    );
-  };
+  const creatorData = post?.creator?.fullName ? post?.creator : creator;
 
   const deletePost = async () => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this post?');
-    if (!confirmDelete) return;
-
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/posts/${post._id}`, {
+      const confirmDelete = window.confirm('Are you sure you want to delete this post?');
+      if (!confirmDelete) return;
+
+      await axios.delete(`${import.meta.env.VITE_API_URL}/posts/${post?._id}`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
-      onDeletePost?.(post._id);
+
+      if (onDeletePost) onDeletePost(post?._id);
     } catch (err) {
       console.error('Error deleting post:', err);
     }
@@ -68,49 +66,44 @@ const Feed = ({ post, onDeletePost, setPost }) => {
 
   const recoverPost = async () => {
     try {
-      const { data } = await axios.patch(
-        `${import.meta.env.VITE_API_URL}/posts/${post._id}/recover`,
+      const response = await axios.patch(
+        `${import.meta.env.VITE_API_URL}/posts/${post?._id}/recover`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
         }
       );
-      onDeletePost?.(post._id);
-      alert(data?.message || 'Post recovered!');
+      if (onDeletePost) onDeletePost(post?._id);
+      alert(response?.data?.message || 'Post recovered!');
     } catch (err) {
       console.error('Error recovering post:', err);
     }
   };
-
   const deletePostPermanently = async () => {
-    const confirmDelete = window.confirm(
-      'Are you sure you want to permanently delete this post? This cannot be undone.'
-    );
+  try {
+    const confirmDelete = window.confirm(' Are you sure you want to permanently delete this post? This cannot be undone.');
     if (!confirmDelete) return;
 
-    try {
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/posts/${post._id}/permanent`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-        }
-      );
-      onDeletePost?.(post._id);
-      alert('Post permanently deleted.');
-    } catch (err) {
-      console.error('Error permanently deleting post:', err);
-      alert('Failed to delete post permanently.');
-    }
-  };
+    await axios.delete(`${import.meta.env.VITE_API_URL}/posts/${post?._id}/permanent`, {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true,
+    });
+
+    if (onDeletePost) onDeletePost(post?._id);
+    alert('Post permanently deleted.');
+  } catch (err) {
+    console.error('Error permanently deleting post:', err);
+    alert('Failed to delete post permanently.');
+  }
+};
+
 
   return (
     <article className="feed">
-      {/* Header */}
       <header className="feed__header">
         <Link to={`/users/${creatorId}`} className="feed__header-profile">
-          <ProfileImage image={creatorData?.profilePhoto} />
+          <ProfileImage image={userId?.profilePhoto} />
           <div className="feed__header-details">
             <h4>{creatorData?.fullName}</h4>
             <small>{formatTimeAgo(post?.createdAt)}</small>
@@ -119,49 +112,52 @@ const Feed = ({ post, onDeletePost, setPost }) => {
 
         {userId === creatorId && (
           <div className="feed__header-actions">
-            <button onClick={() => setShowMenu((prev) => !prev)}>
+            <button onClick={() => setShowMenu(!showMenu)}>
               <FaEllipsisH />
             </button>
             {showMenu && (
-              <div className="feed__header-menu">
-                <button onClick={() => navigate(`/edit-post/${post._id}`)}>
-                  Edit
-                </button>
+            <div className="feed__header-menu">
+                <button onClick={() => navigate(`/edit-post/${post?._id}`)}>Edit</button>
+
                 {!post?.deletedAt ? (
-                  <button onClick={deletePost}>Move to Trash</button>
+                <button onClick={deletePost}>Move to Trash</button>
                 ) : (
-                  <>
+                <>
                     <button onClick={recoverPost}>Recover</button>
-                    <button onClick={deletePostPermanently}>Delete Permanently</button>
-                  </>
+                    <button onClick={deletePostPermanently}>Delete</button>
+                </>
                 )}
-              </div>
+            </div>
             )}
+
           </div>
         )}
       </header>
 
-      {/* Body */}
       <Link to={`/post/${post._id}`} className="feed__body">
         {post?.media?.length > 0 && (
-          <div className="feed__media-scroll" onClick={(e) => e.stopPropagation()}>
-            {post.media.map((media, index) => (
-              <div className="feed__media-item" key={index}>
+          <div className="feed__media-scroll " onClick={(e) => e.stopPropagation()}>
+            {post?.media.map((media, index) => (
+              <div className="feed__media-item " key={index}>
                 {media.type === 'image' || media.type === 'gif' ? (
-                  <img
-                    src={media.url}
-                    alt={`Post media ${index}`}
-                    className="w-full object-cover rounded-lg h-[300px] md:h-[250px] lg:h-[220px]"
-                  />
+                  <img src={media.url} alt={`Post media ${index}`} 
+                  className='w-full object-cover rounded-lg
+                    h-[300px]
+                    md:grid-cols-2:h-[250px]
+                    lg:grid-cols-3:h-[220px]' />
                 ) : media.type === 'video' ? (
-                  <video
-                    controls
-                    src={media.url}
-                    className="w-full object-cover rounded-lg h-[300px] md:h-[250px] lg:h-[220px]"
-                  />
+                  <video controls src={media.url} 
+                   className='w-full object-cover rounded-lg
+                    h-[300px]
+                    md:grid-cols-2:h-[250px]
+                    lg:grid-cols-3:h-[220px]' />
                 ) : media.type === 'audio' ? (
-                  <audio controls className="w-full">
-                    <source src={media.url} type="audio/mpeg" />
+                  <audio controls>
+                    <source src={media.url} type="audio/mpeg"
+                     className='w-full object-cover rounded-lg
+                    h-[300px]
+                    md:grid-cols-2:h-[250px]
+                    lg:grid-cols-3:h-[220px]' />
                     Your browser does not support the audio element.
                   </audio>
                 ) : null}
@@ -172,15 +168,14 @@ const Feed = ({ post, onDeletePost, setPost }) => {
 
         {post?.body && (
           <p>
-            <TrimText item={post.body} maxLength={180} />
+            <TrimText item={post?.body} maxLength={180} />
           </p>
         )}
       </Link>
 
-      {/* Tags & Location */}
-      <div className="feed__tags-location">
+      <div className="feed__tags-location ">
         {post?.tags?.length > 0 && (
-          <div className="feed__tags">
+          <div className="feed__tags h-2">
             {post.tags.map((tag, index) => (
               <span key={index} className="feed__tag">
                 #{tag}
@@ -189,20 +184,15 @@ const Feed = ({ post, onDeletePost, setPost }) => {
           </div>
         )}
         {post?.location && (
-          <div className="feed__location">📍 {post.location}</div>
+          <div className="feed__location">📍 {post?.location}</div>
         )}
       </div>
 
-      {/* Footer */}
       <footer className="feed__footer">
         <div className="feed__footer-actions">
           <div className="gap">
-            <LikeDislikePost
-              post={post}
-              onPostUpdate={handlePostUpdate}
-              userId={userId}
-            />
-            <Link to={`/post/${post._id}`} className="feed__footer-comments">
+            <LikeDislikePost post={post} onPostUpdate={handlePostUpdate} userId={userId} />
+            <Link to={`/post/${post?._id}`} className="feed__footer-comments">
               <FaRegCommentDots size={20} />
             </Link>
             <small>{post?.comments?.length || 0}</small>
@@ -212,7 +202,7 @@ const Feed = ({ post, onDeletePost, setPost }) => {
           </button>
         </div>
         <div className="feed__footer-left">
-          <Bookmarking post={post} onPostUpdate={handlePostUpdate} />
+          <Bookmarking post={post} />
         </div>
       </footer>
     </article>

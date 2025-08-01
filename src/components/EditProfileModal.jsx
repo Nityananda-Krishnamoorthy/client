@@ -11,6 +11,8 @@ import {
   useMediaQuery,
   useTheme,
   Typography,
+  Box,
+  Divider,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -54,7 +56,6 @@ export default function EditProfileModal({ open, onClose, userData, onProfileUpd
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name in form.socialMedia) {
       setForm((prev) => ({
         ...prev,
@@ -113,11 +114,12 @@ export default function EditProfileModal({ open, onClose, userData, onProfileUpd
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm"  className="border rounded-lg" fullScreen={fullScreen}>
-      <DialogTitle>Edit Profile</DialogTitle>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={fullScreen}>
+      <DialogTitle>Edit Your Profile</DialogTitle>
 
-      <DialogContent dividers>
-        <Grid container spacing={2}>
+      <DialogContent dividers sx={{ px: { xs: 2, sm: 4 }, py: 3 }}>
+        <Grid container spacing={3}>
+          {/* Full Name */}
           <Grid item xs={12}>
             <TextField
               label="Full Name"
@@ -131,6 +133,7 @@ export default function EditProfileModal({ open, onClose, userData, onProfileUpd
             />
           </Grid>
 
+          {/* Bio */}
           <Grid item xs={12}>
             <TextField
               label="Bio"
@@ -140,9 +143,11 @@ export default function EditProfileModal({ open, onClose, userData, onProfileUpd
               fullWidth
               multiline
               rows={3}
+              placeholder="Tell us about yourself..."
             />
           </Grid>
 
+          {/* Private Toggle */}
           <Grid item xs={12}>
             <FormControlLabel
               control={
@@ -152,20 +157,30 @@ export default function EditProfileModal({ open, onClose, userData, onProfileUpd
                   color="primary"
                 />
               }
-              label="Private Account"
+              label="Make Profile Private"
             />
           </Grid>
 
+          {/* Divider */}
           <Grid item xs={12}>
-            <Typography variant="subtitle1" fontWeight={500} mt={2} mb={1}>
+            <Divider />
+          </Grid>
+
+          {/* Section Title */}
+          <Grid item xs={12}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
               Social Media Links
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Paste full URLs to your social profiles
             </Typography>
           </Grid>
 
-          {[ "linkedin", "github"].map((platform) => (
-            <Grid item xs={12} sm={12} key={platform}>
+          {/* Social Fields */}
+          {["twitter", "instagram", "linkedin", "github"].map((platform) => (
+            <Grid item xs={12} sm={6} key={platform}>
               <TextField
-                label={`${platform[0].toUpperCase() + platform.slice(1)} URL`}
+                label={`${platform.charAt(0).toUpperCase() + platform.slice(1)} URL`}
                 name={platform}
                 value={form.socialMedia[platform]}
                 onChange={handleChange}

@@ -29,7 +29,7 @@ const Feed = ({ post }) => {
   }, [creatorId, token]);
 
   return (
-    <article className="feed rounded-xl overflow-hidden h-64">
+    <article className="rounded-xl overflow-hidden h-64">
       <Link to={`/post/${post._id}`} className="block h-full">
         <div className="h-full overflow-hidden">
           {/* Post Media */}

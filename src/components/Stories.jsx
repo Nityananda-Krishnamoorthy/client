@@ -3,64 +3,121 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { FaPlus } from 'react-icons/fa';
 import ProfileImage from './ProfileImage';
+import StoryViewer from './StoryViewer';
+import { useSelector } from 'react-redux';
 
-const Stories = ({ userId}) => {
-  const [stories, setStories] = useState([]);
+const Stories = () => {
+  const [timelineStories, setTimelineStories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedStoryId, setSelectedStoryId] = useState(null);
+  const [userStories, setUserStories] = useState([]);
+  const token = useSelector(state => state?.user?.currentUser?.token);
+  const userId = useSelector(state => state?.user?.currentUser?._id);
 
   useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/stories/timeline`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        setStories(response.data);
-      } catch (error) {
-        console.error('Error fetching stories:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+
+     if (!token || !userId) return;
+
+const fetchStories = async () => {
+  try {
+    const [timelineRes, userRes] = await Promise.all([
+      axios.get(`${import.meta.env.VITE_API_URL}/stories/timeline`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }),
+      axios.get(`${import.meta.env.VITE_API_URL}/stories/user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    ]);
+    
+    setTimelineStories(timelineRes.data);
+    setUserStories(userRes.data);
+  } catch (error) {
+    console.error('Error fetching stories:', error);
+  } finally {
+    setLoading(false);
+  }
+};
     
     fetchStories();
-  }, []);
+  }, [token, userId]);
+
+  const openStory = (storyId) => {
+    setSelectedStoryId(storyId);
+  };
+
+  const closeStoryViewer = () => {
+    setSelectedStoryId(null);
+  };
 
   if (loading) {
     return <div className="stories-loading">Loading stories...</div>;
   }
+
+  // Group stories by user
+  const groupedStories = timelineStories.reduce((acc, story) => {
+    const userId = story.user._id;
+    if (!acc[userId]) {
+      acc[userId] = {
+        user: story.user,
+        stories: [],
+        hasUnseen: false
+      };
+    }
+    
+    acc[userId].stories.push(story);
+    
+    // Check if any story is unseen by current user
+    if (!acc[userId].hasUnseen) {
+      acc[userId].hasUnseen = !story.viewers.some(viewer => viewer.toString() === userId);
+    }
+    
+    return acc;
+  }, {});
 
   return (
     <div className="stories-container">
       <div className="stories">
         {/* User's own story */}
         <div className="story your-story">
-          <Link to={`/stories/create`}>
+          <Link to={userStories.length > 0 ? "#" : "/stories/create"} onClick={(e) => {
+            if (userStories.length > 0) {
+              e.preventDefault();
+              openStory(userStories[0]._id);
+            }
+          }}>
             <div className="story-avatar">
-              <ProfileImage />
-              <div className="add-story">
-                <FaPlus />
-              </div>
+              <ProfileImage image={userStories[0]?.user?.profilePhoto} />
+              {userStories.length === 0 && (
+                <div className="add-story">
+                  <FaPlus />
+                </div>
+              )}
             </div>
             <span>Your Story</span>
           </Link>
         </div>
         
         {/* Friends' stories */}
-       {stories.map(story => {
-        const isOwnStory = story.user._id === userId;
-        return (
-            <div className={`story ${isOwnStory ? 'own-story' : ''}`} key={story._id}>
-            <Link to={`/stories/${story._id}`}>
-                <div className={`story-avatar ${story.seen ? 'seen' : 'unseen'}`}>
-                <ProfileImage image={story.user.profilePhoto} />
-                </div>
-                <span>{story.user.userName}</span>
-            </Link>
+        {Object.values(groupedStories).map((group, index) => (
+          <div 
+            className={`story ${group.hasUnseen ? 'unseen' : 'seen'}`} 
+            key={group.user._id}
+            onClick={() => openStory(group.stories[0]._id)}
+          >
+            <div className="story-avatar">
+              <ProfileImage image={group.user.profilePhoto} />
             </div>
-        );
-        })}
-
+            <span>{group.user.userName}</span>
+          </div>
+        ))}
       </div>
+      
+      {selectedStoryId && (
+        <StoryViewer 
+          storyId={selectedStoryId} 
+          onClose={closeStoryViewer} 
+        />
+      )}
     </div>
   );
 };

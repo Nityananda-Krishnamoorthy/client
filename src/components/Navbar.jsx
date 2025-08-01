@@ -52,14 +52,14 @@ const Navbar = () => {
 
 
   return (
-    <nav className='navbar'>
+    <nav className='navbar py-3'>
       <div className="container navbar__container">
         {/* Left: Logo */}
         <Link to="/" className='navbar__logo'>
           <span className="logo-symbol">N</span>
           <span className="logo-text">EXIS</span>
            &nbsp; &nbsp;
-          <span className="logo-symbol"><BetaBadge/></span>
+          <span className="logo-symbol mb-3"><BetaBadge/></span>
 
         </Link>
 

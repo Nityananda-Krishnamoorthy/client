@@ -5,6 +5,16 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+.scrollable-page {
+  @apply overflow-y-auto h-full;
+}
+
+
 
 
 
@@ -246,6 +256,59 @@
 
 .search-container.dark .search-result-item:hover {
   background-color: var(--dark-hover);
+}
+/* ===================
+Chat App
+====================== */
+
+.container.main__container.desktop-layout.messages-layout {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  padding: 0;
+
+  
+  
+}
+
+.container.main__container.desktop-layout.messages-layout .outlet-container.full-width {
+  width: 100%;
+  flex: 1;
+  
+}
+
+/* Messages layout specific styles */
+.messages-layout .sidebar {
+  display: none;
+  
+  
+}
+.messages-layout-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row; /* use column if needed */
+  padding: 0;
+}
+
+.messages-layout-container > * {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Optional: restrict conversation list width */
+.messages-layout-container .conversation-list {
+  width: 350px;
+  min-width: 280px;
+  max-width: 400px;
+  border-right: 1px solid var(--border-color);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .container.main__container.desktop-layout.messages-layout {
+    padding: 0;
+  }
 }
 
 /* ===================
@@ -1174,12 +1237,13 @@ NAVBAR
 .navbar__logo {
   display: flex;
   align-items: center;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
   color: var(--color-primary);
 }
 
 .logo-symbol {
+
   font-weight: 800;
 }
 
@@ -2121,13 +2185,14 @@ CREATE POST
 .createPostPage {
    background: var(--color-gray-0);
   border-radius: var(--radius-3);
-  padding: 0.5rem;
+  padding-top: 6rem;
+  margin-top: 6rem;
+
   margin-bottom: 1.2rem;
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-bottom: 1rem;
 }
 .createPostPage .back-button {
   display: inline-flex;
@@ -2136,7 +2201,7 @@ CREATE POST
   background: var(--color-gray-100);
   color: var(--color-gray-700);
   border: none;
-  padding: 0.7rem 1.5rem;
+
   border-radius: var(--radius-3);
   margin-bottom: 1.5rem;
   cursor: pointer;
@@ -4158,82 +4223,178 @@ MEDIA QUERIES (small screens)
 }
 
 /* ================= STORIES ================= */
+/* Stories Container */
 .stories-container {
-  background: var(--color-gray-0);
-  border-radius: var(--radius-3);
-  padding: 1rem;
-  margin-bottom: 1.2rem;
+  width: 100%;
   overflow-x: auto;
+  padding: 10px 0;
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .stories {
   display: flex;
-  gap: 1.2rem;
-  padding: 0.5rem;
+  gap: 15px;
+  padding: 0 10px;
 }
 
 .story {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 5rem;
   cursor: pointer;
+  width: 80px;
 }
 
 .story-avatar {
-  width: 4rem;
-  height: 4rem;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
-  overflow: hidden;
-  position: relative;
-  border: 2px solid var(--color-primary);
-  padding: 2px;
+  border: 3px solid transparent;
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.story-avatar.unseen {
-  border: 2px solid var(--color-primary);
+.story.unseen .story-avatar {
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
 }
 
-.story-avatar.seen {
-  border: 2px solid var(--color-gray-300);
+.story.seen .story-avatar {
+  background: #ddd;
 }
 
 .story-avatar img {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   object-fit: cover;
-  border-radius: 50%;
-}
-
-.your-story .story-avatar {
-  position: relative;
-}
-
-.add-story {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: var(--color-primary);
-  color: white;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 0.8rem;
-  border: 2px solid var(--color-gray-0);
+  border: 2px solid white;
 }
 
 .story span {
-  font-size: 0.8rem;
-  margin-top: 0.3rem;
+  font-size: 12px;
+  margin-top: 5px;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 5rem;
+  width: 100%;
 }
 
+.your-story .add-story {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #0095f6;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+/* Story Viewer */
+.story-viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.story-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+/* Create Story */
+.create-story-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.create-story-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.story-preview {
+  position: relative;
+  width: 100%;
+  height: 80vh;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.story-preview img, 
+.story-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-story-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0095f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.upload-options {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.upload-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 20px;
+  border: 2px dashed #ddd;
+  border-radius: 10px;
+  width: 150px;
+}
+
+.upload-option:hover {
+  border-color: #0095f6;
+}
 /* Engagement styles */
 .engagement-stats {
   display: flex;
@@ -4442,83 +4603,99 @@ MEDIA QUERIES (small screens)
 Explore Page
 ============================================*/
 /* File: ExplorePage.css or global styles with Tailwind */
-.explore-page {
-  @apply w-full min-h-screen px-4 py-6  text-gray-900 dark:text-gray-100;
-}
-
-.mobile-search-container {
-  @apply block md:hidden mb-4;
-}
-
-.search-bar {
-  @apply flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full px-4 py-2 shadow-sm;
-}
-.search-bar input {
-  @apply flex-1 outline-none bg-transparent text-sm;
-}
-.search-icon {
-  @apply text-xl text-gray-500 dark:text-gray-400;
-}
-
-.search-dropdown-overlay {
-  @apply fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-40;
-}
-
-.search-dropdown-portal {
-  @apply bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 mx-2;
-}
-.search-header {
-  @apply flex justify-between items-center mb-4;
-}
-.search-header h4 {
-  @apply font-semibold text-lg;
-}
-.search-header button {
-  @apply text-sm px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600;
-}
-.loading-indicator,
-.no-results {
-  @apply text-center text-gray-500 dark:text-gray-400 py-4;
-}
-.search-results {
-  @apply divide-y divide-gray-200 dark:divide-gray-700;
-}
-.search-result-item {
-  @apply flex items-center gap-3 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 rounded transition;
-}
-.search-result-item .username {
-  @apply font-medium;
-}
-.search-result-item .fullname {
-  @apply text-xs text-gray-500 dark:text-gray-400;
-}
-.search-result-item .user-info {
-  @apply flex flex-col;
-}
-.search-result-item img {
-  @apply w-10 h-10 rounded-full object-cover;
-}
-
-/* Explore Content */
-.explore-content {
-  @apply grid grid-cols-1 md:grid-cols-4 gap-6;
-}
-
-/* Trending Section */
-.trending-section {
-  @apply md:col-span-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow;
-}
-.trending-section h2 {
-  @apply text-lg font-semibold mb-2;
-}
-.topics-container {
-  @apply flex flex-col gap-2;
-}
-.topic-tag {
-  @apply flex justify-between items-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded px-3 py-2 text-sm font-medium transition;
-}
-.topic-tag .post-count {
-  @apply text-xs text-gray-500 dark:text-gray-400 ml-2;
-}
 
 
+@layer components {
+  .search-bar {
+    @apply flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 px-4 py-2 shadow-sm rounded-full;
+  }
+
+  .search-bar input {
+    @apply flex-1 outline-none bg-transparent text-sm;
+  }
+
+  .search-icon {
+    @apply text-xl text-gray-500 dark:text-gray-400;
+  }
+
+  .search-dropdown-overlay {
+    @apply fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-40;
+  }
+
+  .search-dropdown-portal {
+    @apply bg-white dark:bg-gray-800 w-full max-w-md rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 mx-2;
+  }
+
+  .search-header {
+    @apply flex justify-between items-center mb-4;
+  }
+
+  .search-header h4 {
+    @apply font-semibold text-lg;
+  }
+
+  .search-header button {
+    @apply text-sm px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600;
+  }
+
+  .loading-indicator,
+  .no-results {
+    @apply text-center text-gray-500 dark:text-gray-400 py-4;
+  }
+
+  .search-results {
+    @apply divide-y divide-gray-200 dark:divide-gray-700;
+  }
+
+  .search-result-item {
+    @apply flex items-center gap-3 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 rounded transition;
+  }
+
+  .search-result-item .username {
+    @apply font-medium;
+  }
+
+  .search-result-item .fullname {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+  }
+
+  .search-result-item .user-info {
+    @apply flex flex-col;
+  }
+
+  .search-result-item img {
+    @apply w-10 h-10 rounded-full object-cover;
+  }
+
+  .explore-page {
+    @apply w-full min-h-screen px-4 py-6 text-gray-900 dark:text-gray-100;
+  }
+
+  .mobile-search-container {
+    @apply block md:hidden mb-4;
+  }
+
+  .explore-content {
+    @apply grid grid-cols-1 md:grid-cols-4 gap-6;
+  }
+
+  .trending-section {
+    @apply md:col-span-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow;
+  }
+
+  .trending-section h2 {
+    @apply text-lg font-semibold mb-2;
+  }
+
+  .topics-container {
+    @apply flex flex-col gap-2;
+  }
+
+  .topic-tag {
+    @apply flex justify-between items-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded px-3 py-2 text-sm font-medium transition;
+  }
+
+  .topic-tag .post-count {
+    @apply text-xs text-gray-500 dark:text-gray-400 ml-2;
+  }
+}
