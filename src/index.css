@@ -4551,6 +4551,12 @@ MEDIA QUERIES (small screens)
   overflow: hidden;
   cursor: pointer;
 }
+.bookmark-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
 
 .bookmarks-post img,
 .bookmarks-post video {

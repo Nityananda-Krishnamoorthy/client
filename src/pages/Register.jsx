@@ -17,7 +17,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
-  const [isLoading,setIsLoading] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -28,14 +28,29 @@ const Register = () => {
 
   const registerUser = async (e) => {
     e.preventDefault();
-    if (userData.password !== userData.confirmPassword) {
-      setError("Passwords don't match.");
-      return;
+    setError('');
+
+    if (!userData.email.includes('@')) {
+      return setError('Please enter a valid email address.');
     }
+
+    if (userData.password.length < 6) {
+      return setError('Password must be at least 6 characters long.');
+    }
+
+    if (userData.password !== userData.confirmPassword) {
+      return setError("Passwords don't match.");
+    }
+
+    setIsLoading(true);
 
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/users/register`, userData);
+
       if (response.status === 201) {
+        setRegisteredEmail(userData.email);
+        setIsRegistered(true);
+
         const loginResponse = await axios.post(`${import.meta.env.VITE_API_URL}/users/login`, {
           userNameOrEmail: userData.email,
           password: userData.password
@@ -53,26 +68,10 @@ const Register = () => {
           navigate('/');
         }
       }
-    if (response.status === 201) {
-    setRegisteredEmail(userData.email);
-    setIsRegistered(true);
-    return;
-    }
-
-    if (!userData.email.includes('@')) {
-        setError('Please enter a valid email address.');
-        return;
-        }
-
-        if (userData.password.length < 6) {
-        setError('Password must be at least 6 characters long.');
-        return;
-        }
-
-
-
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -101,107 +100,62 @@ const Register = () => {
   return (
     <section className="flex items-center justify-center min-h-screen bg-gradient-to-r from-cyan-50 to-indigo-100 px-4">
       <div className="w-full max-w-4xl bg-white shadow-xl rounded-lg grid grid-cols-1 md:grid-cols-2 overflow-hidden">
-        {/* Left Brand Panel */}
+        {/* Left Panel */}
         <div className="bg-cyan-500 text-white p-8 hidden md:flex flex-col justify-center items-center">
           <h1 className="text-4xl font-bold mb-2">NEXIS</h1>
           <p className="text-lg text-center">Join our community today</p>
         </div>
 
-        {/* Right Form Panel */}
+        {/* Form Panel */}
         <div className="p-6 sm:p-8 md:p-10">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">Create Account</h2>
           <form onSubmit={registerUser} className="space-y-5">
             {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <input
-                type="text"
-                name="fullName"
-                id="fullName"
-                value={userData.fullName}
-                onChange={changeInputHandler}
-                required
-                className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="userName" className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-              <input
-                type="text"
-                name="userName"
-                id="userName"
-                value={userData.userName}
-                onChange={changeInputHandler}
-                required
-                className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input
-                type="email"
-                name="email"
-                id="email"
-                value={userData.email}
-                onChange={changeInputHandler}
-                required
-                className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  id="password"
-                  value={userData.password}
-                  onChange={changeInputHandler}
-                  required
-                  className="w-full border rounded-md px-3 py-2 pr-10 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-500"
-                >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  id="confirmPassword"
-                  value={userData.confirmPassword}
-                  onChange={changeInputHandler}
-                  required
-                  className="w-full border rounded-md px-3 py-2 pr-10 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-500"
-                >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </span>
-              </div>
-            </div>
+            <InputField
+              label="Full Name"
+              name="fullName"
+              value={userData.fullName}
+              onChange={changeInputHandler}
+            />
+            <InputField
+              label="Username"
+              name="userName"
+              value={userData.userName}
+              onChange={changeInputHandler}
+            />
+            <InputField
+              label="Email"
+              name="email"
+              type="email"
+              value={userData.email}
+              onChange={changeInputHandler}
+            />
+            <PasswordField
+              label="Password"
+              name="password"
+              value={userData.password}
+              onChange={changeInputHandler}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+            />
+            <PasswordField
+              label="Confirm Password"
+              name="confirmPassword"
+              value={userData.confirmPassword}
+              onChange={changeInputHandler}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+            />
 
             <button
-            type="submit"
-            disabled={isLoading}
-            className={`w-full py-2 rounded-md transition-colors text-white ${
+              type="submit"
+              disabled={isLoading}
+              className={`w-full py-2 rounded-md transition-colors text-white ${
                 isLoading ? 'bg-cyan-400 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-700'
-            }`}
+              }`}
             >
-            {isLoading ? 'Creating...' : 'Create Account'}
+              {isLoading ? 'Creating...' : 'Create Account'}
             </button>
 
             <p className="text-sm text-center text-gray-600">
@@ -222,5 +176,43 @@ const Register = () => {
     </section>
   );
 };
+
+const InputField = ({ label, name, value, onChange, type = 'text' }) => (
+  <div>
+    <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <input
+      type={type}
+      name={name}
+      id={name}
+      value={value}
+      onChange={onChange}
+      required
+      className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+    />
+  </div>
+);
+
+const PasswordField = ({ label, name, value, onChange, showPassword, setShowPassword }) => (
+  <div>
+    <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <div className="relative">
+      <input
+        type={showPassword ? 'text' : 'password'}
+        name={name}
+        id={name}
+        value={value}
+        onChange={onChange}
+        required
+        className="w-full border rounded-md px-3 py-2 pr-10 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+      />
+      <span
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-500"
+      >
+        {showPassword ? <FaEyeSlash /> : <FaEye />}
+      </span>
+    </div>
+  </div>
+);
 
 export default Register;

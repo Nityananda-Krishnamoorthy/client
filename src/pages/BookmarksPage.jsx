@@ -24,7 +24,7 @@ const BookmarksPage = () => {
       );
       setBookmarks(response?.data?.bookmarks || []);
     } catch (err) {
-      setError('Failed to load bookmarks.');
+      setError(err.response?.data?.message || 'Failed to load bookmarks.');
     } finally {
       setIsLoading(false);
     }
@@ -47,25 +47,30 @@ const BookmarksPage = () => {
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           Bookmarked Posts
         </h2>
-        <div className="w-16" /> {/* spacer to balance header */}
+        <div className="w-16" />
       </div>
 
       {/* States */}
       {isLoading ? (
-        <div className="text-center text-gray-600 dark:text-gray-300 text-lg">
+        <div className="text-center text-gray-600 dark:text-gray-300 text-lg animate-pulse">
           Loading bookmarked posts...
         </div>
       ) : error ? (
-        <div className="text-center text-red-500">{error}</div>
+        <div className="text-center text-red-500 text-sm">{error}</div>
       ) : bookmarks?.length === 0 ? (
-        <div className="text-center text-gray-500 dark:text-gray-400">
-          You haven’t bookmarked any posts yet.
+        <div className="text-center text-gray-500 dark:text-gray-400 space-y-2">
+          <p>You haven’t bookmarked any posts yet.</p>
+          <button
+            onClick={() => navigate('/explore')}
+            className="mt-2 text-sm text-blue-600 dark:text-blue-400 underline hover:text-blue-800"
+          >
+            Explore trending posts →
+          </button>
         </div>
       ) : (
-        // Bookmarks Grid
-        <div className="grid gap-4 max-w-5xl mx-auto grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 max-w-5xl mx-auto grid-cols-2 lg:grid-cols-3">
           {bookmarks.map((bookmark) => (
-            <div key={bookmark._id} className="rounded overflow-hidden">
+            <div key={bookmark._id} className="rounded overflow-hidden transition">
               <Feed post={bookmark} />
             </div>
           ))}

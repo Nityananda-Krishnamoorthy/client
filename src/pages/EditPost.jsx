@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
-// import { IoMdImages } from 'react-icons/io';
+import { IoMdImages } from 'react-icons/io';
 
 const EditPost = () => {
   const { id } = useParams();
@@ -23,16 +23,18 @@ const EditPost = () => {
         });
 
         const post = res.data;
-        setBody(post.body);
+        setBody(post.body || '');
         setTags(post.tags?.join(', ') || '');
         setLocation(post.location || '');
 
-        const formattedMedia = (post.media || []).map((item) => {
-          const url = typeof item === 'string' ? item : item?.url;
-          const type = typeof item === 'string' ? url?.split('.').pop() : item?.type || url?.split('.').pop();
-          if (!url || typeof url !== 'string') return null;
-          return { preview: url, type };
-        }).filter(Boolean);
+        const formattedMedia = (post.media || [])
+          .map((item) => {
+            const url = typeof item === 'string' ? item : item?.url;
+            const type = item?.type || url?.split('.').pop();
+            if (!url || typeof url !== 'string') return null;
+            return { preview: url, type };
+          })
+          .filter(Boolean);
 
         setPreviewMedia(formattedMedia);
       } catch (err) {
@@ -119,13 +121,26 @@ const EditPost = () => {
               const isAudio = type.startsWith('audio') || /\.(mp3)$/i.test(src);
 
               if (isImage) {
-                return <img key={index} src={src} alt={`media-${index}`} className="w-full h-24 object-cover rounded-md" />;
+                return (
+                  <img
+                    key={index}
+                    src={src}
+                    alt={`media-${index}`}
+                    className="w-full h-24 object-cover rounded-md"
+                  />
+                );
               }
               if (isVideo) {
-                return <video key={index} src={src} controls className="w-full rounded-md" />;
+                return (
+                  <video key={index} src={src} controls className="w-full rounded-md h-24 object-cover" />
+                );
               }
               if (isAudio) {
-                return <audio key={index} controls className="w-full"><source src={src} /></audio>;
+                return (
+                  <audio key={index} controls className="w-full rounded-md">
+                    <source src={src} />
+                  </audio>
+                );
               }
               return null;
             })}
@@ -133,8 +148,8 @@ const EditPost = () => {
         )}
 
         <div className="flex items-center gap-4">
-          {/* <label htmlFor="media" className="cursor-pointer text-blue-600 hover:text-blue-800">
-            <IoMdImages size={28} />
+          <label htmlFor="media" className="cursor-pointer text-blue-600 hover:text-blue-800">
+            <IoMdImages size={24} />
           </label>
           <input
             type="file"
@@ -143,11 +158,12 @@ const EditPost = () => {
             multiple
             hidden
             onChange={handleMediaChange}
-          />*/}
+          />
+
           <button
             type="submit"
             className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          > 
+          >
             Update Post
           </button>
         </div>

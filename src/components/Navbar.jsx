@@ -19,7 +19,7 @@ const Navbar = () => {
   const res = await axios.get(`/users/${userId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  dispatch(updateUser(res.data)); // Replace with actual Redux action
+  dispatch(updateUser(res.data)); 
 };
 
 
@@ -52,14 +52,14 @@ const Navbar = () => {
 
 
   return (
-    <nav className='navbar py-3'>
+    <nav className='navbar'>
       <div className="container navbar__container">
         {/* Left: Logo */}
         <Link to="/" className='navbar__logo'>
           <span className="logo-symbol">N</span>
           <span className="logo-text">EXIS</span>
            &nbsp; &nbsp;
-          <span className="logo-symbol mb-3"><BetaBadge/></span>
+          <span className="logo-symbol -mt-2"><BetaBadge/></span>
 
         </Link>
 

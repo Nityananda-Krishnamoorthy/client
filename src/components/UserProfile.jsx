@@ -9,7 +9,7 @@ import EditProfileModal from './EditProfileModal';
 import UserPosts from '../components/UserPosts';
 import { userActions } from '../store/user-slice';
 import { Link } from 'react-router-dom';
-import Divider from '@mui/material/Divider';
+
 
 
 const UserProfile = () => {

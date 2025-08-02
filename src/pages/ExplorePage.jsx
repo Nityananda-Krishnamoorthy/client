@@ -125,7 +125,7 @@ const ExplorePage = () => {
                 {searchResults.map(user => (
                   <Link
                     key={user._id}
-                    to={`/users/${user.userName}`}
+                    to={`/users/${user._id}`}
                     className="search-result-item"
                     onClick={() => {
                       setIsSearchActive(false);

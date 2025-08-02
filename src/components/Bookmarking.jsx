@@ -1,55 +1,49 @@
-import React, { useEffect } from 'react';
-import { BsBookmark, BsBookmarkFill } from 'react-icons/bs';
+import React, { useState } from 'react';
 import axios from 'axios';
+import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 
-const Bookmarking = ({ post, onPostUpdate }) => {
-  const token = useSelector((state) => state?.user?.currentUser?.token);
-  const userId = useSelector((state) => state?.user?.currentUser?.id);
-  
-  // Check if bookmarked
-  const isBookmarked = post?.bookmarks?.some(id => id.toString() === userId?.toString());
+const Bookmarking = ({ post = {}, onPostUpdate = () => {} }) => {
+  const [loading, setLoading] = useState(false);
+  const token = useSelector(state => state?.user?.currentUser?.token);
 
   const toggleBookmark = async () => {
-    if (!token || !userId) return;
-    
+    if (!token || loading) return;
+
+    setLoading(true);
     try {
-      // Optimistic UI update
-      const action = isBookmarked ? 'unbookmark' : 'bookmark';
-      const updatedBookmarks = isBookmarked 
-        ? post.bookmarks.filter(id => id.toString() !== userId)
-        : [...post.bookmarks, userId];
-      
-      onPostUpdate?.({
-        ...post,
-        bookmarks: updatedBookmarks
+      const url = `${import.meta.env.VITE_API_URL}/posts/${post?._id}/bookmarks`;
+      const method = post?.isBookmarked ? 'delete' : 'post';
+
+      const { data } = await axios[method](url, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
       });
 
-      // API call
-      const method = isBookmarked ? 'delete' : 'post';
-      await axios[method](
-        `${import.meta.env.VITE_API_URL}/posts/${post?._id}/bookmarks`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-    } catch (error) {
-      // Revert on error
-      onPostUpdate?.(post);
-      console.error('Bookmarking error:', error);
+      // Update bookmark status
+      onPostUpdate({
+        ...post,
+        bookmarks: data?.bookmarks || [],
+        isBookmarked: data?.isBookmarked ?? post?.isBookmarked,
+      });
+    } catch (err) {
+      console.error('Error while bookmarking post:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <button 
-      className="p-1 bg-white/70 rounded-full hover:bg-white transition-colors"
+    <button
       onClick={toggleBookmark}
-      aria-label={isBookmarked ? "Remove bookmark" : "Bookmark this post"}
+      disabled={loading}
+      title={post?.isBookmarked ? "Remove Bookmark" : "Bookmark this post"}
+      aria-label={post?.isBookmarked ? "Remove bookmark" : "Bookmark post"}
+      className={`bookmark-btn transition duration-150 ease-in-out ${
+        post?.isBookmarked ? 'text-blue-500' : 'text-gray-500'
+      } hover:text-blue-600 disabled:opacity-50`}
     >
-      {isBookmarked ? 
-        <BsBookmarkFill size={20} className="text-blue-600" /> : 
-        <BsBookmark size={20} className="text-gray-700" />
-      }
+      {post?.isBookmarked ? <FaBookmark size={20} /> : <FaRegBookmark size={20} />}
     </button>
   );
 };

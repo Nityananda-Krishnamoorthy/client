@@ -1,103 +1,129 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Stories from 'react-insta-stories';
+import ProfileImage from './ProfileImage';
+import { FaTimes, FaFire, FaHeart, FaLaugh, FaSurprise } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
-import { FaTimes } from 'react-icons/fa';
 
 const StoryViewer = ({ storyId, onClose }) => {
-  const [story, setStory] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [allStories, setAllStories] = useState([]);
-  const token = useSelector(state => state?.user?.currentUser?.token);
-  const userId = useSelector(state => state?.user?.currentUser?._id);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const token = useSelector(state => state.user?.currentUser?.token);
+  const userId = useSelector(state => state.user?.currentUser?._id);
 
   useEffect(() => {
-    const fetchStories = async () => {
-  try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/stories/timeline`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    setAllStories(response.data);
-    
-    const initialIndex = response.data.findIndex(s => s._id === storyId);
-    setCurrentIndex(initialIndex >= 0 ? initialIndex : 0);
-  } catch (error) {
-    console.error('Error fetching stories:', error);
-  }
-};
-
-
-    fetchStories();
-  }, [storyId, token]);
-
-  useEffect(() => {
-    if (allStories.length > 0 && currentIndex >= 0) {
-      setStory(allStories[currentIndex]);
-      
-      // Mark story as seen
-      if (!allStories[currentIndex].viewers.includes(userId)) {
-        markStoryAsSeen(allStories[currentIndex]._id);
+    const load = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/stories/timeline`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const sorted = response.data.sort((a, b) =>
+          new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setAllStories(sorted);
+        const index = sorted.findIndex(s => s._id === storyId);
+        setCurrentIndex(index >= 0 ? index : 0);
+      } catch (err) {
+        console.error('Failed to load viewer stories', err);
+        onClose();
       }
+    };
+    load();
+  }, [storyId]);
+
+  const story = allStories[currentIndex] || {};
+
+  useEffect(() => {
+    setProgress(0);
+    const duration = story.duration || 5;
+    const timer = setInterval(() => {
+      setProgress(p => {
+        if (p >= 100) {
+          clearInterval(timer);
+          handleNext();
+          return 0;
+        }
+        return p + 100 / (duration * 10);
+      });
+    }, 100);
+
+    if (story.viewers?.every(v => v.user.toString() !== userId)) {
+      axios.post(`${import.meta.env.VITE_API_URL}/stories/${story._id}/seen`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(console.error);
     }
-  }, [currentIndex, allStories, userId]);
 
- const markStoryAsSeen = async (storyId) => {
-  try {
-    await axios.post(
-      `${import.meta.env.VITE_API_URL}/stories/${storyId}/seen`,
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    
-    setAllStories(prev => prev.map(s => 
-      s._id === storyId ? {...s, viewers: [...s.viewers, userId]} : s
-    ));
-  } catch (error) {
-    console.error('Error marking story as seen:', error);
-  }
-};
+    return () => clearInterval(timer);
+  }, [currentIndex]);
 
-  const handleStoryChange = (newIndex) => {
-    setCurrentIndex(newIndex);
+  const handleNext = () => {
+    if (currentIndex < allStories.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else onClose();
+  };
+  const handlePrev = () => currentIndex > 0 && setCurrentIndex(currentIndex - 1);
+
+  const reactToStory = emoji => {
+    axios.post(`${import.meta.env.VITE_API_URL}/stories/${story._id}/react`, { emoji }, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(console.error);
   };
 
-  const handleAllStoriesEnd = () => {
-    onClose();
-  };
-
-  if (!story) return <div className="story-viewer-loading">Loading stories...</div>;
-
-  const formattedStories = allStories.map(s => ({
-    url: s.media,
-    type: s.type,
-    duration: 5000,
-    header: {
-      heading: s.user.userName,
-      subheading: new Date(s.createdAt).toLocaleTimeString(),
-      profileImage: s.user.profilePhoto
-    }
-  }));
+  if (!story._id) return null;
 
   return (
-    <div className="story-viewer-overlay">
-      <button className="story-close-btn" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+      <div className="absolute top-4 left-0 right-0 flex px-4 space-x-1 z-50">
+        {allStories.map((_, i) => (
+          <div key={i} className="h-1 flex-1 bg-gray-600 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${i === currentIndex ? 'bg-white' : 'bg-gray-400/40'}`}
+              style={{ width: i === currentIndex ? `${progress}%` : '100%' }}
+            />
+          </div>
+        ))}
+      </div>
+
+      <button className="absolute top-6 right-6 text-white z-50" onClick={onClose}>
         <FaTimes size={24} />
       </button>
-      
-      <Stories
-        stories={formattedStories}
-        currentIndex={currentIndex}
-        onStoryEnd={(index, count) => {
-          if (index + 1 >= count) handleAllStoriesEnd();
-        }}
-        onAllStoriesEnd={handleAllStoriesEnd}
-        onStoryStart={handleStoryChange}
-        keyboardNavigation
-        defaultInterval={5000}
-        width="100%"
-        height="100%"
-      />
+
+      <div className="w-full h-full flex items-center justify-center">
+        {story.type === 'video'
+          ? <video src={story.media} autoPlay muted className="max-w-full max-h-full" />
+          : <img src={story.media} alt="" className="max-w-full max-h-full object-contain" />
+        }
+      </div>
+
+      <div className="absolute top-6 left-6 flex items-center space-x-3 z-50">
+        <ProfileImage image={story.user.profilePhoto} size="sm" />
+        <div className="flex flex-col text-white">
+          <span className="font-medium">@{story.user.userName}</span>
+          <span className="text-xs text-gray-300">
+            {new Date(story.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+      </div>
+
+      <div className="absolute bottom-8 w-full flex justify-center gap-4 z-50">
+        {[
+          { icon: <FaFire />, emoji: '🔥' },
+          { icon: <FaHeart />, emoji: '❤️' },
+          { icon: <FaLaugh />, emoji: '😂' },
+          { icon: <FaSurprise />, emoji: '😮' }
+        ].map((it, idx) => (
+          <button
+            key={idx}
+            onClick={() => reactToStory(it.emoji)}
+            className="text-white bg-black bg-opacity-50 p-3 rounded-full hover:bg-opacity-75 transition"
+          >
+            {it.icon}
+          </button>
+        ))}
+      </div>
+
+      <div className="absolute left-0 top-0 bottom-0 w-1/2" onClick={handlePrev} />
+      <div className="absolute right-0 top-0 bottom-0 w-1/2" onClick={handleNext} />
     </div>
   );
 };
