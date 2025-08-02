@@ -56,7 +56,7 @@ const Login = () => {
         <section className="flex items-center justify-center min-h-screen bg-gradient-to-r from-cyan-50 to-indigo-100 px-4">
       <div className="w-full max-w-4xl bg-white shadow-xl rounded-lg grid grid-cols-1 md:grid-cols-2 overflow-hidden">
         {/* Left Brand Panel */}
-        <div className="bg-cyan-500 text-white p-8 hidden md:flex flex-col justify-center items-center">
+        <div className="bg-cyan-00 text-white p-8 hidden md:flex flex-col justify-center items-center">
           <h1 className="text-4xl font-bold mb-2">NEXIS</h1>
           <p className="text-lg text-center">Welcome Back! Sign in to Continue</p>
         </div>
